@@ -1,19 +1,48 @@
 # s_client
 
-A powerful HTTP client package for Flutter supporting both `http` and `dio` backends with advanced features like interceptors, caching, retry logic, and more.
+A powerful HTTP client package for Flutter that lets you **choose your backend**: lightweight `http` or feature-rich `dio` — with a single, unified API.
+
+## 🎯 Why s_client?
+
+**One API, Two Backends** — Switch between `http` and `dio` with a single line of configuration. No code changes needed.
+
+**Safe by Design** — All requests are wrapped in try-catch internally. No runtime crashes, ever. Handle responses with `onSuccess`/`onError` callbacks or the result tuple.
+
+```dart
+// Use lightweight http package (great for simple apps)
+SClient.configure(const ClientConfig(clientType: ClientType.http));
+
+// OR use feature-rich dio package (advanced features)
+SClient.configure(const ClientConfig(clientType: ClientType.dio));
+
+// Your code stays exactly the same!
+final (response, error) = await SClient.instance.get(
+  url: 'https://api.example.com/users',
+);
+
+// OR simply make your request with your desired clientType for this specific request, overriding the SClient configuration 
+// with optional callbacks for clean, safe error handling — no try-catch needed!
+final (response, error) = await SClient.instance.get(
+  url: 'https://api.example.com/users',
+  clientType: ClientType.dio,  // Override just for this request
+  onSuccess: (response) => print('Got ${response.body}'),
+  onError: (error) => print('Failed: ${error.message}'),
+);
+
+```
 
 ## Features
 
-- **Safe by Default**: All requests internally wrapped in try-catch blocks - no unhandled exceptions, guaranteed safe execution
-- **Dual Backend Support**: Switch between lightweight `http` or feature-rich `dio` packages
-- **Unified API**: Every method returns a result tuple AND supports optional callbacks
-- **Type-Safe JSON Parsing**: Built-in support for JSON deserialization with `getJson`, `getJsonList`, `postJson`
-- **Customizable Status Codes**: Define what constitutes success vs error responses
-- **Interceptors**: Built-in logging, authentication, and caching interceptors
-- **Retry Logic**: Automatic retries with exponential backoff
-- **Request Cancellation**: Cancel individual requests or all pending requests
-- **File Operations**: Upload and download files with progress callbacks
-
+- **🔄 Dual Backend Support**: Switch between `http` or `dio` anytime — same code, different engine
+- **🔀 Per-Request Override**: Use different backends for individual requests
+- **🛡️ Safe by Default**: All requests internally wrapped in try-catch blocks — no unhandled exceptions
+- **📦 Unified API**: Every method returns a result tuple AND supports optional callbacks
+- **🔄 Type-Safe JSON Parsing**: Built-in support for JSON deserialization with `getJson`, `getJsonList`, `postJson`
+- **⚙️ Customizable Status Codes**: Define what constitutes success vs error responses
+- **🔌 Interceptors**: Built-in logging, authentication, and caching interceptors
+- **🔁 Retry Logic**: Automatic retries with exponential backoff
+- **❌ Request Cancellation**: Cancel individual requests or all pending requests
+- **📁 File Operations**: Upload and download files with progress callbacks
 
 ## Demo
 
@@ -37,7 +66,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  s_client: ^1.0.0
+  s_client: ^1.1.0
 ```
 
 ## Quick Start
@@ -48,9 +77,12 @@ dependencies:
 import 'package:s_client/s_client.dart';
 ```
 
-### Tuple-Based API (Functional Style)
+### Basic Usage
 
 ```dart
+// Choose your backend once
+SClient.configure(const ClientConfig(clientType: ClientType.http)); // or ClientType.dio
+
 // Returns (ClientResponse?, ClientException?) tuple
 // All requests are internally wrapped in try-catch - NEVER throws!
 final (response, error) = await SClient.instance.get(
@@ -64,7 +96,61 @@ if (error != null) {
 }
 ```
 
-### Why This Is Safe
+---
+
+## Backend Switching
+
+The core feature of s_client — **seamlessly switch between HTTP clients**.
+
+### Global Configuration
+
+Set the default backend for all requests:
+
+```dart
+// Use lightweight http package
+SClient.configure(const ClientConfig(clientType: ClientType.http));
+
+// Or use feature-rich dio package
+SClient.configure(const ClientConfig(clientType: ClientType.dio));
+
+// All your existing code continues to work unchanged!
+final (response, error) = await SClient.instance.get(url: '/users');
+```
+
+### Per-Request Override
+
+Override the backend for individual requests:
+
+```dart
+// Global config uses http
+SClient.configure(const ClientConfig(clientType: ClientType.http));
+
+// But this specific request uses dio
+final (response, error) = await SClient.instance.get(
+  url: 'https://api.example.com/users',
+  clientType: ClientType.dio,  // Override just for this request
+);
+
+// Works with all methods: get, post, put, patch, delete, head, download, uploadFile
+final (data, err) = await SClient.instance.post(
+  url: '/upload',
+  body: {'data': 'value'},
+  clientType: ClientType.dio,  // Use dio for this upload
+);
+```
+
+### When to Use Each Backend
+
+| `ClientType.http` | `ClientType.dio` |
+|-------------------|------------------|
+| Simple apps with basic HTTP needs | Advanced interceptors |
+| Smaller package size | File upload/download with progress |
+| Fewer dependencies | Request cancellation |
+| | More control over request/response handling |
+
+---
+
+## Safe by Default
 
 Unlike raw HTTP clients, `s_client` **never throws exceptions**. Every request is wrapped in internal try-catch blocks:
 
@@ -85,10 +171,29 @@ if (error != null) {
 // No try-catch needed - the package handles it for you!
 ```
 
-### With Optional Callbacks
+---
+
+## API Patterns
+
+### Tuple-Based API (Functional Style)
+
+All methods return a `(response, error)` tuple:
 
 ```dart
-// Same method, with optional callbacks - returns tuple AND invokes callbacks
+final (response, error) = await SClient.instance.get(url: '/users');
+
+if (error != null) {
+  print('Error: ${error.message}');
+} else {
+  print('Success: ${response!.body}');
+}
+```
+
+### With Optional Callbacks
+
+Same methods, with optional callbacks — returns tuple AND invokes callbacks:
+
+```dart
 await SClient.instance.get(
   url: 'https://api.example.com/users',
   onSuccess: (response) {
@@ -122,7 +227,7 @@ if (response != null) {
 
 ### Using Data from Both Callback AND Tuple Result
 
-The callback receives the **exact same object** as the tuple result, so you can use the data in both places:
+The callback receives the **exact same object** as the tuple result:
 
 ```dart
 // Capture data from callback
@@ -133,7 +238,6 @@ ClientResponse? callbackResponse;
 final (response, error) = await SClient.instance.get(
   url: 'https://api.example.com/user/123',
   onSuccess: (resp) {
-    // Extract and use data in the callback
     callbackResponse = resp;
     final userData = jsonDecode(resp.body);
     extractedUsername = userData['username'];
@@ -163,7 +267,41 @@ if (response != null) {
 - Use callbacks for: logging, analytics, UI updates, caching
 - Use tuple for: business logic, error handling, data processing
 
-### Typed JSON Parsing
+---
+
+## HTTP Methods
+
+All methods return a result tuple AND support optional callbacks:
+
+### GET
+```dart
+// Tuple only
+final (response, error) = await SClient.instance.get(url: '/users');
+
+// With callbacks (still returns tuple)
+final (response, error) = await SClient.instance.get(
+  url: '/users',
+  onSuccess: (response) => print(response.body),
+  onError: (error) => print(error.message),
+);
+```
+
+### POST
+```dart
+final (response, error) = await SClient.instance.post(
+  url: '/users',
+  body: {'name': 'John', 'age': 30},
+  onSuccess: (response) => print('Created: ${response.body}'),
+  onError: (error) => print('Error: ${error.message}'),
+);
+```
+
+### PUT, PATCH, DELETE, HEAD
+All follow the same unified pattern.
+
+---
+
+## Typed JSON Parsing
 
 ```dart
 class User {
@@ -199,6 +337,60 @@ await SClient.instance.getJsonList<User>(
   },
 );
 ```
+
+---
+
+## File Operations
+
+### Download to Memory
+```dart
+final (bytes, error) = await SClient.instance.download(
+  url: 'https://example.com/file.pdf',
+  onSuccess: (bytes) => saveFile(bytes),
+  onError: (error) => print('Download failed: ${error.message}'),
+  onProgress: (current, total) {
+    print('Progress: ${(current / total * 100).toStringAsFixed(1)}%');
+  },
+);
+```
+
+### Download to File
+```dart
+// Save directly to file with FileAccessMode control (Dio 5.8+)
+final (file, error) = await SClient.instance.downloadToFile(
+  url: 'https://example.com/large-file.zip',
+  savePath: '/path/to/save/file.zip',
+  fileAccessMode: FileAccessMode.write, // write, append, writeOnly, writeOnlyAppend
+  onSuccess: (file) => print('Saved to: ${file.path}'),
+  onError: (error) => print('Download failed: ${error.message}'),
+  onProgress: (current, total) {
+    print('Progress: ${(current / total * 100).toStringAsFixed(1)}%');
+  },
+);
+
+// Resume a download by appending to existing file
+final (file, error) = await SClient.instance.downloadToFile(
+  url: 'https://example.com/large-file.zip',
+  savePath: '/path/to/partial-file.zip',
+  fileAccessMode: FileAccessMode.append, // Continue from existing bytes
+);
+```
+
+### Upload
+```dart
+final (response, error) = await SClient.instance.uploadFile(
+  url: '/upload',
+  filePath: '/path/to/file.pdf',
+  fileField: 'file',
+  onSuccess: (response) => print('Uploaded'),
+  onError: (error) => print('Upload failed'),
+  onProgress: (current, total) {
+    print('Progress: ${(current / total * 100).toStringAsFixed(1)}%');
+  },
+);
+```
+
+---
 
 ## Configuration
 
@@ -242,6 +434,8 @@ SClient.configure(
   ),
 );
 ```
+
+---
 
 ## Interceptors
 
@@ -367,63 +561,7 @@ class CustomInterceptor extends ClientInterceptor {
 }
 ```
 
-## HTTP Methods
-
-All methods return a result tuple AND support optional callbacks:
-
-### GET
-```dart
-// Tuple only
-final (response, error) = await SClient.instance.get(url: '/users');
-
-// With callbacks (still returns tuple)
-final (response, error) = await SClient.instance.get(
-  url: '/users',
-  onSuccess: (response) => print(response.body),
-  onError: (error) => print(error.message),
-);
-```
-
-### POST
-```dart
-final (response, error) = await SClient.instance.post(
-  url: '/users',
-  body: {'name': 'John', 'age': 30},
-  onSuccess: (response) => print('Created: ${response.body}'),
-  onError: (error) => print('Error: ${error.message}'),
-);
-```
-
-### PUT, PATCH, DELETE, HEAD
-All follow the same unified pattern.
-
-## File Operations
-
-### Download
-```dart
-final (bytes, error) = await SClient.instance.download(
-  url: 'https://example.com/file.pdf',
-  onSuccess: (bytes) => saveFile(bytes),
-  onError: (error) => print('Download failed: ${error.message}'),
-  onProgress: (current, total) {
-    print('Progress: ${(current / total * 100).toStringAsFixed(1)}%');
-  },
-);
-```
-
-### Upload
-```dart
-final (response, error) = await SClient.instance.uploadFile(
-  url: '/upload',
-  filePath: '/path/to/file.pdf',
-  fileField: 'file',
-  onSuccess: (response) => print('Uploaded'),
-  onError: (error) => print('Upload failed'),
-  onProgress: (current, total) {
-    print('Progress: ${(current / total * 100).toStringAsFixed(1)}%');
-  },
-);
-```
+---
 
 ## Request Cancellation
 
@@ -438,6 +576,8 @@ SClient.instance.cancel('users-request');
 // Cancel all pending requests
 SClient.instance.cancelAll();
 ```
+
+---
 
 ## Error Handling
 
@@ -474,15 +614,7 @@ if (error != null) {
 }
 ```
 
-## Backend Switching
-
-```dart
-// Use lightweight http package
-SClient.configure(const ClientConfig(clientType: ClientType.http));
-
-// Use feature-rich dio package  
-SClient.configure(const ClientConfig(clientType: ClientType.dio));
-```
+---
 
 ## Testing
 

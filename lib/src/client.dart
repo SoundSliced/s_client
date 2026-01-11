@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io' if (dart.library.html) 'dart:io';
 
 import 'package:dio/dio.dart' as dio;
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -1453,6 +1454,125 @@ class SClient {
       onError?.call(result.$2);
       return result;
     }
+  }
+
+  /// Downloads a file from the specified URL and saves it to a file path.
+  ///
+  /// This method saves the file directly to disk, which is more memory-efficient
+  /// for large files compared to [download] which loads the entire file into memory.
+  ///
+  /// The [fileAccessMode] parameter (Dio 5.8+) controls how the file is opened:
+  /// - [FileAccessMode.write] (default): Creates a new file or truncates existing
+  /// - [FileAccessMode.append]: Appends to an existing file (useful for resumable downloads)
+  /// - [FileAccessMode.writeOnly]: Write-only access
+  /// - [FileAccessMode.writeOnlyAppend]: Write-only, appending to existing file
+  ///
+  /// Note: [fileAccessMode] is only supported with [ClientType.dio]. When using
+  /// [ClientType.http], files are always written in write mode.
+  ///
+  /// Returns a tuple of (savePath, error). The savePath is returned on success
+  /// to confirm where the file was saved.
+  Future<(String?, ClientException?)> downloadToFile({
+    required String url,
+    required String savePath,
+    Map<String, String>? headers,
+    Duration? timeout,
+    ClientType? clientType,
+    OnProgress? onProgress,
+    String? cancelKey,
+    dio.FileAccessMode? fileAccessMode,
+    // Optional callbacks
+    void Function(String savedPath)? onSuccess,
+    OnError? onError,
+  }) async {
+    final fullUrl = _buildUrl(url);
+    final useClient = clientType ?? config.clientType;
+
+    try {
+      if (useClient == ClientType.dio) {
+        dio.CancelToken? cancelToken;
+        if (cancelKey != null) {
+          cancelToken = dio.CancelToken();
+          _cancelTokens[cancelKey] = cancelToken;
+        }
+
+        final response = await _dio.download(
+          fullUrl,
+          savePath,
+          options: dio.Options(
+            headers: headers,
+            receiveTimeout: timeout ?? config.receiveTimeout,
+          ),
+          onReceiveProgress: onProgress,
+          cancelToken: cancelToken,
+          fileAccessMode: fileAccessMode ?? dio.FileAccessMode.write,
+        );
+
+        if (cancelKey != null) _cancelTokens.remove(cancelKey);
+
+        if (response.statusCode != null &&
+            response.statusCode! >= 200 &&
+            response.statusCode! < 300) {
+          final result = (savePath, null);
+          onSuccess?.call(savePath);
+          return result;
+        } else {
+          final result = (
+            null,
+            ClientException(
+              message: 'Download failed with status ${response.statusCode}',
+              url: fullUrl,
+              statusCode: response.statusCode,
+              type: ClientErrorType.badResponse,
+            )
+          );
+          onError?.call(result.$2);
+          return result;
+        }
+      } else {
+        // For http package, we need to download and write manually
+        final response = await _http
+            .get(Uri.parse(fullUrl), headers: headers)
+            .timeout(timeout ?? config.receiveTimeout);
+
+        if (response.statusCode >= 200 && response.statusCode < 300) {
+          // Write to file (note: fileAccessMode not supported with http package)
+          final file = await _writeToFile(savePath, response.bodyBytes);
+          final result = (file.path, null);
+          onSuccess?.call(file.path);
+          return result;
+        } else {
+          final result = (
+            null,
+            ClientException(
+              message: 'Download failed with status ${response.statusCode}',
+              url: fullUrl,
+              statusCode: response.statusCode,
+              type: ClientErrorType.badResponse,
+            )
+          );
+          onError?.call(result.$2);
+          return result;
+        }
+      }
+    } catch (e) {
+      if (cancelKey != null) _cancelTokens.remove(cancelKey);
+      final result = (null, _toException(e, fullUrl));
+      onError?.call(result.$2);
+      return result;
+    }
+  }
+
+  /// Helper method to write bytes to a file.
+  Future<File> _writeToFile(String path, List<int> bytes) async {
+    // Using dart:io File - only available on non-web platforms
+    if (kIsWeb) {
+      throw UnsupportedError(
+          'downloadToFile with http backend is not supported on web. Use ClientType.dio instead.');
+    }
+    final file = File(path);
+    await file.writeAsBytes(bytes);
+    return file;
   }
 
   /// Uploads a file using multipart/form-data.

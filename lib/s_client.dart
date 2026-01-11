@@ -8,6 +8,9 @@ library;
 export 'src/client.dart';
 export 'src/client_config.dart';
 
+// Re-export FileAccessMode from dio for use with downloadToFile
+export 'package:dio/dio.dart' show FileAccessMode;
+
 // Models
 export 'src/models/client_response.dart';
 export 'src/models/client_exception.dart';

@@ -1,3 +1,9 @@
+## 1.1.0
+
+* dio package dependency upgraded from 5.4.0 to 5.9.0 --> FileAccessMode feature added to downloadToFile, now supporting directly writing to disk and supports resume capabilities.
+* README updated
+
+
 ## 1.0.0
 
 * Initial release
