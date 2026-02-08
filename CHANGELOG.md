@@ -1,3 +1,10 @@
+## 2.0.0
+- package no longer holds the source code for it, but exports/exposes the `s_packages` package instead, which will hold this package's latest source code.
+- The only future changes to this package will be made via `s_packages` package dependency upgrades, in order to bring the new fixes or changes to this package
+- dependent on `s_packages`: ^1.1.2
+
+
+
 ## 1.1.0
 
 * dio package dependency upgraded from 5.4.0 to 5.9.0 --> FileAccessMode feature added to downloadToFile, now supporting directly writing to disk and supports resume capabilities.

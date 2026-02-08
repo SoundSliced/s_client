@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:s_client/s_client.dart';
+import 'package:s_packages/s_client/src/models/client_exception.dart';
 
 void main() {
   group('ClientConfig Advanced Options', () {

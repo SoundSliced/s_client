@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:s_client/s_client.dart';
 
 class InterceptorsTestScreen extends StatefulWidget {
