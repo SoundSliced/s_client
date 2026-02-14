@@ -1,3 +1,9 @@
+## 2.1.0
+- `s_packages` dependency upgraded to ^1.3.0
+- Added `putJson<T>()` typed variant for PUT requests with JSON deserialization
+- Added `patchJson<T>()` typed variant for PATCH requests with JSON deserialization
+- Added `deleteJson<T>()` typed variant for DELETE requests with JSON deserialization
+
 ## 2.0.0
 - package no longer holds the source code for it, but exports/exposes the `s_packages` package instead, which will hold this package's latest source code.
 - The only future changes to this package will be made via `s_packages` package dependency upgrades, in order to bring the new fixes or changes to this package

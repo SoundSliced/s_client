@@ -66,7 +66,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  s_client: ^2.0.0
+  s_client: ^2.1.0
 ```
 
 ## Quick Start
@@ -335,6 +335,33 @@ await SClient.instance.getJsonList<User>(
   onError: (error) {
     print('Error: ${error.message}');
   },
+);
+```
+
+### PUT, PATCH, DELETE with JSON Parsing
+
+```dart
+// PUT with automatic JSON deserialization
+await SClient.instance.putJson<User>(
+  url: 'https://api.example.com/user/1',
+  body: {'name': 'Updated Name'},
+  fromJson: User.fromJson,
+  onSuccess: (user, response) => print('Updated: ${user.name}'),
+);
+
+// PATCH with automatic JSON deserialization
+await SClient.instance.patchJson<User>(
+  url: 'https://api.example.com/user/1',
+  body: {'age': 31},
+  fromJson: User.fromJson,
+  onSuccess: (user, response) => print('Patched: ${user.name}'),
+);
+
+// DELETE with automatic JSON deserialization
+await SClient.instance.deleteJson<User>(
+  url: 'https://api.example.com/user/1',
+  fromJson: User.fromJson,
+  onSuccess: (user, response) => print('Deleted user confirmed'),
 );
 ```
 
