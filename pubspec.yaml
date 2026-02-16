@@ -1,6 +1,6 @@
 name: s_client
 description: Safe-by-default HTTP client with dual backend support (http/dio), never throws exceptions, returns result tuples, supports interceptors, retry logic, and type-safe JSON parsing.
-version: 2.1.1
+version: 2.2.0
 homepage: https://github.com/SoundSliced/s_client
 repository: https://github.com/SoundSliced/s_client
 issue_tracker: https://github.com/SoundSliced/s_client/issues
@@ -12,7 +12,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  s_packages: ^1.4.1
+  s_packages: ^1.5.0
 
 dev_dependencies:
   flutter_test:

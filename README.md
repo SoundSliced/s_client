@@ -66,7 +66,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  s_client: ^2.1.1
+  s_client: ^2.2.0
 ```
 
 ## Quick Start
