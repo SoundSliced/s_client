@@ -31,8 +31,9 @@ void main() {
     test('ClientConfig has sensible defaults', () {
       const config = ClientConfig();
       expect(config.clientType, equals(ClientType.http));
-      expect(config.connectTimeout, equals(const Duration(seconds: 30)));
-      expect(config.receiveTimeout, equals(const Duration(seconds: 30)));
+      expect(config.connectTimeout, isNull);
+      expect(config.receiveTimeout, isNull);
+      expect(config.sendTimeout, isNull);
       expect(config.maxRetries, equals(0)); // Default is 0 (no retry)
     });
 
