@@ -1,4 +1,7 @@
- 
+# 2.2.1
+  - Fixed `Dio` redirect option handling by only setting `maxRedirects` when `followRedirects` is enabled
+  - Applied this fix consistently to base `Dio options` and per-request `Dio` options in `GET` and `POST` flows
+
 ## 2.2.0
 - Added `validateStatus` parameter (`bool Function(int?)?`) to all HTTP methods (`get`, `getJson`, `getJsonList`, `post`, `postJson`, `put`, `putJson`, `patch`, `patchJson`, `delete`, `deleteJson`, `head`, `download`, `downloadToFile`, `uploadFile`) — allows per-request control over which status codes are treated as valid
 - Fixed Dio request options: `followRedirects`, `maxRedirects`, and `validateStatus` are now correctly forwarded to all `_perform*` methods — previously only `receiveTimeout` and `headers` were passed through
